@@ -1,6 +1,7 @@
 import importlib
 import os
 import sys
+from typing import Optional
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 import argparse
@@ -9,7 +10,7 @@ import agentscope
 from agentscope.server import RpcAgentServerLauncher
 
 from simulation.helpers.constants import *
-from simulation.helpers.utils import load_yaml
+from simulation.helpers.utils import create_public_tunnel, load_yaml
 
 
 def parse_args() -> argparse.Namespace:
@@ -18,10 +19,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--host", type=str, default="localhost")
     parser.add_argument("--base_port", type=int, default=13000)
     parser.add_argument("--scenario", type=str, required=True)
+    parser.add_argument(
+        "--tunnel",
+        type=str,
+        choices=["ngrok", "localtunnel"],
+        help="Expose the server via a public tunnel",
+    )
     return parser.parse_args()
 
 
-def setup_participant_agent_server(host: str, port: int, scenario: str) -> None:
+def setup_participant_agent_server(
+    host: str, port: int, scenario: str, tunnel: Optional[str] = None
+) -> None:
     scene_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "examples", scenario
     )
@@ -53,10 +62,18 @@ def setup_participant_agent_server(host: str, port: int, scenario: str) -> None:
         max_pool_size=8192000000,
         max_expire_time=7200000,
     )
+
     assistant_server_launcher.launch(in_subprocess=False)
+
+    if tunnel:
+        url = create_public_tunnel(port, tunnel)
+        print(f"Public URL ({tunnel}): {url}")
+
     assistant_server_launcher.wait_until_terminate()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    setup_participant_agent_server(args.host, args.base_port, args.scenario)
+    setup_participant_agent_server(
+        args.host, args.base_port, args.scenario, args.tunnel
+    )

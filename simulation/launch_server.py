@@ -21,15 +21,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scenario", type=str, required=True)
     parser.add_argument(
         "--tunnel",
-        type=str,
-        choices=["ngrok", "localtunnel"],
-        help="Expose the server via a public tunnel",
+
+        action="store_true",
+        help="Expose the server via localtunnel",
     )
     return parser.parse_args()
 
 
 def setup_participant_agent_server(
-    host: str, port: int, scenario: str, tunnel: Optional[str] = None
+    host: str, port: int, scenario: str, tunnel: bool = False
+
 ) -> None:
     scene_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "examples", scenario
@@ -66,8 +67,9 @@ def setup_participant_agent_server(
     assistant_server_launcher.launch(in_subprocess=False)
 
     if tunnel:
-        url = create_public_tunnel(port, tunnel)
-        print(f"Public URL ({tunnel}): {url}")
+        url = create_public_tunnel(port)
+        print(f"Public URL: {url}")
+
 
     assistant_server_launcher.wait_until_terminate()
 

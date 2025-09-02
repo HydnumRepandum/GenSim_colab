@@ -2,6 +2,8 @@ import json
 import os
 import subprocess
 import time
+from typing import Optional
+
 
 import requests
 import yaml
@@ -90,15 +92,17 @@ def get_token_num(prompt, url, model, api_key, backoff_factor=1):
         time.sleep(sleep_time)
 
 
-def create_public_tunnel(port: int, method: str = "ngrok") -> str:
-    """Expose a local port to the internet via ngrok or localtunnel.
+_TUNNEL_PROC: Optional[subprocess.Popen] = None
+
+
+def create_public_tunnel(port: int) -> str:
+    """Expose a local port to the internet using localtunnel.
+
 
     Parameters
     ----------
     port: int
         Local port to expose.
-    method: str, optional
-        Tunneling tool, either ``"ngrok"`` or ``"localtunnel"``.
 
     Returns
     -------
@@ -106,29 +110,28 @@ def create_public_tunnel(port: int, method: str = "ngrok") -> str:
         Publicly accessible URL.
     """
 
-    if method == "ngrok":
-        try:
-            from pyngrok import ngrok  # type: ignore
-        except Exception as e:  # pragma: no cover - import guard
-            raise ImportError(
-                "pyngrok is required for ngrok tunneling. Install with `pip install pyngrok`."
-            ) from e
+    global _TUNNEL_PROC
+    if _TUNNEL_PROC is not None:
+        raise RuntimeError("A tunnel is already running")
 
-        tunnel = ngrok.connect(port)
-        return tunnel.public_url
-
-    if method == "localtunnel":
-        try:
-            result = subprocess.run(
-                ["npx", "localtunnel", "--port", str(port)],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            # URL is usually the last line in stdout
-            url = result.stdout.strip().splitlines()[-1]
-            return url
-        except Exception as e:  # pragma: no cover - runtime guard
-            raise RuntimeError(f"Failed to start localtunnel: {e}") from e
-
-    raise ValueError("method must be 'ngrok' or 'localtunnel'")
+    try:
+        _TUNNEL_PROC = subprocess.Popen(
+            ["npx", "localtunnel", "--port", str(port)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        assert _TUNNEL_PROC.stdout is not None
+        for line in _TUNNEL_PROC.stdout:
+            line = line.strip()
+            if line.startswith("your url is:"):
+                return line.split(":", 1)[1].strip()
+            if line.startswith("https://"):
+                return line
+        raise RuntimeError("localtunnel did not provide a public URL")
+    except Exception as e:  # pragma: no cover - runtime guard
+        if _TUNNEL_PROC is not None:
+            _TUNNEL_PROC.kill()
+            _TUNNEL_PROC = None
+        raise RuntimeError(f"Failed to start localtunnel: {e}") from e

@@ -6,10 +6,11 @@ from loguru import logger
 
 
 MAX_TIMEOUT_DELAY = 60
+DEFAULT_MAX_ATTEMPTS = 5
 session = requests.Session()
 
 
-def get_embedding(sentence, api, delay=5):
+def get_embedding(sentence, api, delay=5, max_attempts=DEFAULT_MAX_ATTEMPTS):
     url = f"{api}/encode"
     attempt = 0
     while True:
@@ -25,6 +26,10 @@ def get_embedding(sentence, api, delay=5):
             )
             delay = min(2 * delay, MAX_TIMEOUT_DELAY)
             delay = (random.random() + 0.5) * delay
+            if attempt >= max_attempts:
+                raise RuntimeError(
+                    f"Failed to connect to embedding service at {api}. Please ensure the embedding model is running."
+                )
             time.sleep(delay)
         except requests.exceptions.RequestException as e:
             raise RuntimeError(
@@ -32,7 +37,7 @@ def get_embedding(sentence, api, delay=5):
             )
 
 
-def get_embedding_dimension(api, delay=5):
+def get_embedding_dimension(api, delay=5, max_attempts=DEFAULT_MAX_ATTEMPTS):
     url = f"{api}/embedding-dimension"
     attempt = 0
     while True:
@@ -48,6 +53,10 @@ def get_embedding_dimension(api, delay=5):
             )
             delay = min(2 * delay, MAX_TIMEOUT_DELAY)
             delay = (random.random() + 0.5) * delay
+            if attempt >= max_attempts:
+                raise RuntimeError(
+                    f"Failed to connect to embedding service at {api}. Please ensure the embedding model is running."
+                )
             time.sleep(delay)
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"Request failed with error: {e}, URL: {url}")

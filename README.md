@@ -123,6 +123,49 @@ Run the following command to kill the distributed server:
 bash simulation/kill_all_server.sh
 ```
 
+### 2.5 Using on Google Colab
+
+1. Clone the repository and install dependencies in a Colab cell:
+
+   ```bash
+   !git clone https://github.com/TangJiakai/GenSim.git
+   %cd GenSim
+   !pip install -r requirements.txt
+   ```
+
+2. Launch an embedding service (required) and optionally an LLM service. For
+   example, start a single embedding model on port `8666`:
+
+   ```bash
+   !python embedding_service/launch_emb_model.py --model_path BAAI/bge-small-en-v1.5 --port 8666 &
+   ```
+
+3. Start the agent server and expose it to the internet. Set `--tunnel` to
+   `ngrok` or `localtunnel` to obtain a public URL:
+
+   ```bash
+   !python simulation/launch_server.py --scenario chatting --tunnel ngrok
+   ```
+
+   For `ngrok`, ensure that your `NGROK_AUTH_TOKEN` environment variable is
+   configured. Using `localtunnel` requires Node.js and `npx` support.
+
+4. Run the simulator in another cell:
+
+   ```bash
+   !python simulation/examples/chatting/simulator.py
+   ```
+
+   If you see repeated `Attempt ... to get embedding failed` messages, verify
+   that the embedding service is running and that `embedding_api` in the
+   configuration points to the correct URL.
+
+5. After finishing, terminate the server:
+
+   ```bash
+   !bash simulation/kill_all_server.sh
+   ```
+
 ## 3. Efficiency and Effectiveness of GenSim
 ### 3.1 Efficiency
 #### 3.1.1 Time Cost :vs: Agent Quality 

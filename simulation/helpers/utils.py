@@ -1,9 +1,10 @@
-import time
-import requests
-import yaml
-import os
 import json
 import os
+import subprocess
+import time
+
+import requests
+import yaml
 from loguru import logger
 
 from agentscope.constants import _DEFAULT_CFG_NAME
@@ -87,3 +88,47 @@ def get_token_num(prompt, url, model, api_key, backoff_factor=1):
         sleep_time = backoff_factor * (2**attempt)
         logger.info(f"Retrying in {sleep_time} seconds...")
         time.sleep(sleep_time)
+
+
+def create_public_tunnel(port: int, method: str = "ngrok") -> str:
+    """Expose a local port to the internet via ngrok or localtunnel.
+
+    Parameters
+    ----------
+    port: int
+        Local port to expose.
+    method: str, optional
+        Tunneling tool, either ``"ngrok"`` or ``"localtunnel"``.
+
+    Returns
+    -------
+    str
+        Publicly accessible URL.
+    """
+
+    if method == "ngrok":
+        try:
+            from pyngrok import ngrok  # type: ignore
+        except Exception as e:  # pragma: no cover - import guard
+            raise ImportError(
+                "pyngrok is required for ngrok tunneling. Install with `pip install pyngrok`."
+            ) from e
+
+        tunnel = ngrok.connect(port)
+        return tunnel.public_url
+
+    if method == "localtunnel":
+        try:
+            result = subprocess.run(
+                ["npx", "localtunnel", "--port", str(port)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            # URL is usually the last line in stdout
+            url = result.stdout.strip().splitlines()[-1]
+            return url
+        except Exception as e:  # pragma: no cover - runtime guard
+            raise RuntimeError(f"Failed to start localtunnel: {e}") from e
+
+    raise ValueError("method must be 'ngrok' or 'localtunnel'")

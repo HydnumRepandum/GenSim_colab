@@ -159,6 +159,7 @@ bash simulation/kill_all_server.sh
    that the embedding service is running and that `embedding_api` in the
    configuration points to the correct URL.
 
+
 5. After finishing, terminate the server:
 
    ```bash

@@ -1,6 +1,7 @@
 import importlib
 import os
 import sys
+from typing import Optional
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 import argparse
@@ -20,6 +21,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scenario", type=str, required=True)
     parser.add_argument(
         "--tunnel",
+
         action="store_true",
         help="Expose the server via localtunnel",
     )
@@ -28,6 +30,7 @@ def parse_args() -> argparse.Namespace:
 
 def setup_participant_agent_server(
     host: str, port: int, scenario: str, tunnel: bool = False
+
 ) -> None:
     scene_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "examples", scenario
@@ -66,6 +69,7 @@ def setup_participant_agent_server(
     if tunnel:
         url = create_public_tunnel(port)
         print(f"Public URL: {url}")
+
 
     assistant_server_launcher.wait_until_terminate()
 

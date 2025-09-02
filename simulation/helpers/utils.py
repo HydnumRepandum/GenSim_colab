@@ -4,6 +4,7 @@ import subprocess
 import time
 from typing import Optional
 
+
 import requests
 import yaml
 from loguru import logger
@@ -96,6 +97,7 @@ _TUNNEL_PROC: Optional[subprocess.Popen] = None
 
 def create_public_tunnel(port: int) -> str:
     """Expose a local port to the internet using localtunnel.
+
 
     Parameters
     ----------

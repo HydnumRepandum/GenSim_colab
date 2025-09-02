@@ -21,4 +21,3 @@ transformers==4.44.2
 trl==0.11.0
 uvicorn==0.31.0
 wandb==0.18.3
-pyngrok==7.1.6

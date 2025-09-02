@@ -140,15 +140,14 @@ bash simulation/kill_all_server.sh
    !python embedding_service/launch_emb_model.py --model_path BAAI/bge-small-en-v1.5 --port 8666 &
    ```
 
-3. Start the agent server and expose it to the internet. Set `--tunnel` to
-   `ngrok` or `localtunnel` to obtain a public URL:
+3. Start the agent server and expose it to the internet via `localtunnel`:
 
    ```bash
-   !python simulation/launch_server.py --scenario chatting --tunnel ngrok
+   !python simulation/launch_server.py --scenario chatting --tunnel
    ```
 
-   For `ngrok`, ensure that your `NGROK_AUTH_TOKEN` environment variable is
-   configured. Using `localtunnel` requires Node.js and `npx` support.
+   The command prints a public `https://*.loca.lt` URL. Node.js and `npx` must
+   be available (they are preinstalled on Colab).
 
 4. Run the simulator in another cell:
 
